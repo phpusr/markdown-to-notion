@@ -1,13 +1,14 @@
-import { readdirSync, readFileSync, lstatSync } from 'node:fs'
-import { markdownToBlocks, markdownToRichText } from '@tryfabric/martian'
+import { lstatSync, readdirSync, readFileSync } from 'node:fs'
+import { markdownToBlocks } from '@tryfabric/martian'
 import { addBlocks, createPage } from './notion_api.js'
+import { addNoteInfo } from './db.js'
 
 
 await importNotes()
 
 async function importNotes() {
   const notesDir = '/home/phpusr/tmp/notes/NOTES/car';
-  const files = readdirSync(notesDir, {recursive: true}).slice(0, 2)
+  const files = readdirSync(notesDir, {recursive: true}).slice(0, 6)
 
   for (const relFilePath of files) {
     const filePath = `${notesDir}/${relFilePath}`
@@ -29,11 +30,20 @@ async function importNotes() {
     console.log(`\n${relFilePath}`)
     console.log('-'.repeat(30) + '\n')
     //console.log(data);
+
+    const noteInfo = { noteId: page.id, title: relFilePath, filePath: relFilePath  }
+
     const blocks = markdownToBlocks(data)
     try {
-      const res = await addBlocks({parentId: page.id, blocks})
+      await addBlocks({ parentId: page.id, blocks })
+      noteInfo.imported = true
     } catch (e) {
-      console.error('ERROR', JSON.stringify(e))
+      noteInfo.imported = false
+      noteInfo.error = JSON.stringify(e)
+      console.error('ERROR')
     }
+
+    await addNoteInfo(noteInfo)
   }
 }
+
