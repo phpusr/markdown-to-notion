@@ -1,7 +1,7 @@
 import { lstatSync, readdirSync, readFileSync } from 'node:fs'
 import { markdownToBlocks } from '@tryfabric/martian'
 import { addBlocks, createPage } from './notion_api.js'
-import { addNoteInfo } from './db.js'
+import { addImportStatus } from './db.js'
 
 
 await importNotes()
@@ -25,25 +25,26 @@ async function importNotes() {
       continue
     }
 
-    const page = await createPage({title: relFilePath})
-
-    console.log(`\n${relFilePath}`)
-    console.log('-'.repeat(30) + '\n')
-    //console.log(data);
-
-    const noteInfo = { noteId: page.id, title: relFilePath, filePath: relFilePath  }
-
-    const blocks = markdownToBlocks(data)
-    try {
-      await addBlocks({ parentId: page.id, blocks })
-      noteInfo.imported = true
-    } catch (e) {
-      noteInfo.imported = false
-      noteInfo.error = JSON.stringify(e)
-      console.error('ERROR')
-    }
-
-    await addNoteInfo(noteInfo)
+    const noteInfo = { title: relFilePath, filePath: relFilePath, data  }
+    await saveNoteToNotion(noteInfo)
+    await addImportStatus(noteInfo)
   }
 }
 
+async function saveNoteToNotion(noteInfo) {
+  const page = await createPage({ title: noteInfo.title })
+  noteInfo.noteId = page.id
+
+  console.log(`\n${noteInfo.filePath}`)
+  console.log('-'.repeat(30) + '\n')
+
+  const blocks = markdownToBlocks(noteInfo.data)
+  try {
+    await addBlocks({ parentId: page.id, blocks })
+    noteInfo.imported = true
+  } catch (e) {
+    noteInfo.imported = false
+    noteInfo.error = JSON.stringify(e)
+    console.error('ERROR')
+  }
+}
