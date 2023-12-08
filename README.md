@@ -1,9 +1,12 @@
-markdown-notes-to-notion
+markdown-to-notion
 ===
 
 This script import markdown notes to Notion.
 
-> The script required PostgresQL for local cache of imported notes.
+## requirements
+
+- `nodejs`
+- `PostgresQL` - for local cache of imported notes
 
 ## How to run
 
@@ -24,11 +27,15 @@ node index.js --import /path/no/notes
 
 3. Some notes may not import correctly. [Solutions](https://github.com/tryfabric/martian#working-with-notions-limits)
 
+> There is no such command yet
+
 ```bash
 node index.js --show-errors
 ```
 
 4. After correcting the original notes that were imported with an error, they can be imported again
+
+> There is no such command yet
 
 ```bash
 node index.js --import-with-errors /path/no/notes
