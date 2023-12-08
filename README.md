@@ -13,7 +13,7 @@ This script import markdown notes to Notion.
 1. Get `NOTION_TOKEN` and give access to your note where the data will be imported
    - [Create your integration in Notion](https://developers.notion.com/docs/create-a-notion-integration#getting-started)
  
-2. Run the script specifying the folder with notes
+2. Run the script specifying the folder with markdown notes
 
 ```bash
 export NOTION_TOKEN 'secret_notion_token'
@@ -22,7 +22,7 @@ export DB_NAME 'notion'
 export DB_USER 'notion'
 export DB_PASSWORD 'notion-password'
 
-node index.js --import /path/no/notes
+node index.js --import /path/to/notes
 ```
 
 3. Some notes may not import correctly. [Solutions](https://github.com/tryfabric/martian#working-with-notions-limits)
