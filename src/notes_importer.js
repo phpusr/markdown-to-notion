@@ -12,8 +12,7 @@ export async function importNotes(notesDir) {
   console.info(`\nLoaded already imported ${importedNoteList.length} notes`)
 
   // noinspection JSValidateTypes
-  const files = readdirSync(notesDir, { recursive: true })
-    .filter(it => lstatSync(`${notesDir}/${it}`).isFile())
+  const files = getNotesFiles(notesDir)
 
   let fileIndex = 0
   for (const relFilePath of files) {
@@ -41,7 +40,7 @@ export async function importNotes(notesDir) {
     await saveNoteToNotion(noteInfo)
   }
 
-  console.info('\nDONE')
+  console.info('\nDONE.')
 }
 
 async function createParentNotes(relFilePath) {
@@ -61,6 +60,12 @@ async function createParentNotes(relFilePath) {
   }
 
   return parentId
+}
+
+function getNotesFiles(notesDir) {
+  // noinspection JSValidateTypes
+  return readdirSync(notesDir, { recursive: true })
+    .filter(it => lstatSync(`${notesDir}/${it}`).isFile())
 }
 
 async function saveNoteToNotion(noteInfo) {
@@ -87,4 +92,20 @@ async function saveNoteToNotion(noteInfo) {
 
   await addImportStatus(noteInfo)
   return noteInfo
+}
+
+export async function getImportNotesStatus(notesDir) {
+  const notesCount = getNotesFiles(notesDir).length
+  const importedNotes = await loadImportStatuses()
+  const importedCount = importedNotes.length
+  const importedWithErrorsCount = importedNotes.filter(it => !it.imported).length
+  const importedWithoutErrorsCount = importedCount - importedWithErrorsCount
+
+  return {
+    notesCount: notesCount,
+    importedCount,
+    importedWithErrorsCount,
+    importedWithoutErrorsCount,
+    progress: Math.round(importedCount / notesCount * 100)
+  }
 }

@@ -20,3 +20,10 @@ export async function addImportStatus({ noteId, title, filePath, imported, error
   })
 }
 
+export async function cleanDb() {
+  // noinspection SqlWithoutWhere
+  await pool.query({
+    text: 'DELETE FROM imported_notes'
+  })
+  console.info('The database has been cleared.')
+}
