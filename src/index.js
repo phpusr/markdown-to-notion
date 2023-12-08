@@ -13,12 +13,16 @@ async function importNotes() {
   const files = readdirSync(notesDir, { recursive: true })
     .filter(it => lstatSync(`${notesDir}/${it}`).isFile())
 
+  let fileIndex = 0
   for (const relFilePath of files) {
-    createParentNotes(relFilePath)
+    const progress = Math.round(++fileIndex / files.length * 100)
+    console.log(`\n[${progress}%][${fileIndex}/${files.length}] ${relFilePath}`)
+    console.log('-'.repeat(30) + '\n')
+
+    const parentId = await createParentNotes(relFilePath)
 
     let data = ''
     try {
-      const filePath = `${notesDir}/${relFilePath}`
       data = readFileSync(`${notesDir}/${relFilePath}`, 'utf8')
     } catch (e) {
       console.error('error in file: ', relFilePath, '\n', e)
@@ -28,52 +32,55 @@ async function importNotes() {
     const noteInfo = {
       title: relFilePath.split('/').pop().split('.')[0],
       filePath: relFilePath,
+      parentId,
       data
     }
-    console.log(noteInfo)
+    //console.log(noteInfo)
     await saveNoteToNotion(noteInfo)
   }
 }
 
-function createParentNotes(relFilePath) {
-  let dirPath = notesDir
-  for (const dir of relFilePath.split('/').slice(0, -1)) {
-    dirPath += '/' + dir
-    if (importedNotes.hasOwnProperty(dirPath)) {
-      console.info(`dir ${dirPath} already exists`)
-      continue
+async function createParentNotes(relFilePath) {
+  let dirPath = ''
+  let parentId = ''
+  for (const dirName of relFilePath.split('/').slice(0, -1)) {
+    if (dirPath) {
+      dirPath += '/'
     }
+    dirPath += dirName
 
-    console.log('dir', dir)
+    parentId = (await saveNoteToNotion({
+      title: dirName,
+      filePath: dirPath,
+      parentId
+    })).noteId
   }
+
+  return parentId
 }
 
 async function saveNoteToNotion(noteInfo) {
   if (importedNotes.hasOwnProperty(noteInfo.filePath)) {
-    console.info(`Note ${noteInfo.filePath} already exists`)
-    return
+    console.info(`Note "${noteInfo.filePath}" already exists`)
+    return importedNotes[noteInfo.filePath]
   }
 
-  const page = await createPage({ title: noteInfo.title })
+  const page = await createPage({ title: noteInfo.title, pageId: noteInfo.parentId })
   noteInfo.noteId = page.id
+  noteInfo.imported = true
   importedNotes[noteInfo.filePath] = noteInfo
 
-  console.log(`\n${noteInfo.filePath}`)
-  console.log('-'.repeat(30) + '\n')
-
-  if (!noteInfo.data) {
-    return
-  }
-
-  const blocks = markdownToBlocks(noteInfo.data)
-  try {
-    await addBlocks({ parentId: page.id, blocks })
-    noteInfo.imported = true
-  } catch (e) {
-    noteInfo.imported = false
-    noteInfo.error = JSON.stringify(e)
-    console.error('ERROR')
+  if (noteInfo.data) {
+    const blocks = markdownToBlocks(noteInfo.data)
+    try {
+      await addBlocks({parentId: page.id, blocks})
+    } catch (e) {
+      noteInfo.imported = false
+      noteInfo.error = e
+      console.error('ERROR')
+    }
   }
 
   await addImportStatus(noteInfo)
+  return noteInfo
 }
