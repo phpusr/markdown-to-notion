@@ -1,9 +1,10 @@
 import pg from 'pg'
 
 const pool = new pg.Pool({
-  host: 'localhost',
-  database: 'notion',
-  user: 'phpusr'
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'notion',
+  user: process.env.DB_USER || 'phpusr',
+  password: process.env.DB_PASSWORD || ''
 })
 
 export async function loadImportStatuses() {
