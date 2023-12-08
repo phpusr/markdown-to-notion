@@ -3,7 +3,7 @@ markdown-to-notion
 
 This script import markdown notes to Notion.
 
-## requirements
+## Requirements
 
 - `nodejs`
 - `PostgresQL` - for local cache of imported notes
