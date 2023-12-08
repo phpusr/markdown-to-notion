@@ -6,9 +6,18 @@ const notion = new Client({
   auth: process.env.NOTION_TOKEN
 })
 
+let rootPageId = null
+
 export async function createPage({ title, pageId }) {
   if (!pageId) {
-    pageId = ROOT_PAGE_ID
+    if (!rootPageId) {
+      // Creating root page with date
+      rootPageId = (await createPage({
+        title: new Date().toLocaleDateString(),
+        pageId: ROOT_PAGE_ID
+      })).id
+    }
+    pageId = rootPageId
   }
 
   return await notion.pages.create({
