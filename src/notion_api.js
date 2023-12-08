@@ -13,7 +13,7 @@ export async function createPage({ title, pageId }) {
     if (!rootPageId) {
       // Creating root page with date
       rootPageId = (await createPage({
-        title: new Date().toLocaleDateString(),
+        title: new Date().toLocaleString(),
         pageId: ROOT_PAGE_ID
       })).id
     }

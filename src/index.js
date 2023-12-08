@@ -1,7 +1,7 @@
 import { lstatSync, readdirSync, readFileSync } from 'node:fs'
 import { markdownToBlocks } from '@tryfabric/martian'
 import { addBlocks, createPage } from './notion_api.js'
-import { addImportStatus } from './db.js'
+import { addImportStatus, loadImportStatuses } from './db.js'
 
 
 const notesDir = '/home/phpusr/tmp/notes/NOTES/car'
@@ -9,6 +9,10 @@ const importedNotes = {}
 await importNotes()
 
 async function importNotes() {
+  const importedNoteList = await loadImportStatuses()
+  importedNoteList.forEach(noteInfo => importedNotes[noteInfo.filePath] = noteInfo)
+  console.info(`\nLoaded already imported ${importedNoteList.length} notes`)
+
   // noinspection JSValidateTypes
   const files = readdirSync(notesDir, { recursive: true })
     .filter(it => lstatSync(`${notesDir}/${it}`).isFile())
@@ -17,7 +21,7 @@ async function importNotes() {
   for (const relFilePath of files) {
     const progress = Math.round(++fileIndex / files.length * 100)
     console.log(`\n[${progress}%][${fileIndex}/${files.length}] ${relFilePath}`)
-    console.log('-'.repeat(30) + '\n')
+    console.log('-'.repeat(100) + '\n')
 
     const parentId = await createParentNotes(relFilePath)
 
@@ -38,6 +42,8 @@ async function importNotes() {
     //console.log(noteInfo)
     await saveNoteToNotion(noteInfo)
   }
+
+  console.info('\nDONE')
 }
 
 async function createParentNotes(relFilePath) {
@@ -61,7 +67,7 @@ async function createParentNotes(relFilePath) {
 
 async function saveNoteToNotion(noteInfo) {
   if (importedNotes.hasOwnProperty(noteInfo.filePath)) {
-    console.info(`Note "${noteInfo.filePath}" already exists`)
+    console.info(` - Note "${noteInfo.filePath}" already exists`)
     return importedNotes[noteInfo.filePath]
   }
 
@@ -76,7 +82,7 @@ async function saveNoteToNotion(noteInfo) {
       await addBlocks({parentId: page.id, blocks})
     } catch (e) {
       noteInfo.imported = false
-      noteInfo.error = e
+      noteInfo.error = e.body || e
       console.error('ERROR')
     }
   }

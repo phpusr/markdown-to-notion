@@ -6,12 +6,17 @@ const pool = new pg.Pool({
   user: 'phpusr'
 })
 
-//await addNoteInfo({ title: 'test', filePath: 'testpath', imported: true })
+export async function loadImportStatuses() {
+  const res = await pool.query({
+    text: 'SELECT * FROM imported_notes'
+  })
+  return res.rows
+}
 
 export async function addImportStatus({ noteId, title, filePath, imported, error }) {
-  const text = 'INSERT INTO imported_notes(note_id, title, file_path, imported, error) VALUES($1, $2, $3, $4, $5)'
-  const values = [noteId, title, filePath, imported, error]
-  const res = await pool.query(text, values)
-  //console.log(res)
+  await pool.query({
+    text: 'INSERT INTO imported_notes("noteId", title, "filePath", imported, error) VALUES($1, $2, $3, $4, $5)',
+    values: [noteId, title, filePath, imported, error]
+  })
 }
 
