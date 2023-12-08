@@ -4,11 +4,9 @@ import { addBlocks, createPage } from './notion_api.js'
 import { addImportStatus, loadImportStatuses } from './db.js'
 
 
-const notesDir = '/home/phpusr/tmp/notes/NOTES/car'
 const importedNotes = {}
-await importNotes()
 
-async function importNotes() {
+export async function importNotes(notesDir) {
   const importedNoteList = await loadImportStatuses()
   importedNoteList.forEach(noteInfo => importedNotes[noteInfo.filePath] = noteInfo)
   console.info(`\nLoaded already imported ${importedNoteList.length} notes`)
