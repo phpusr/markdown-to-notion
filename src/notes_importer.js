@@ -95,7 +95,7 @@ async function saveNoteToNotion(noteInfo) {
   return noteInfo
 }
 
-export async function getImportNotesStatus(notesDir) {
+export async function getImportedNotesStatus(notesDir) {
   const notesCount = getNotesFiles(notesDir).filesAndDirs.length
   const importedNotes = await loadImportStatuses()
   const importedCount = importedNotes.length
@@ -109,4 +109,8 @@ export async function getImportNotesStatus(notesDir) {
     importedWithoutErrorsCount,
     progress: Math.round(importedCount / notesCount * 100)
   }
+}
+
+export async function getImportedNotesErrors() {
+  return (await loadImportStatuses()).filter(it => it.error)
 }

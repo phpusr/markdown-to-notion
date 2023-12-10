@@ -1,4 +1,4 @@
-import { getImportNotesStatus, importNotes } from './src/notes_importer.js'
+import { getImportedNotesErrors, getImportedNotesStatus, importNotes } from './src/notes_importer.js'
 import { cleanDb } from './src/db.js'
 
 await main()
@@ -20,6 +20,9 @@ async function main() {
     case '--clean-db':
       await cleanDb()
       return
+    case '--show-errors':
+      await showErrors()
+      return
     default:
       printHelp()
   }
@@ -33,8 +36,15 @@ function printHelp() {
 }
 
 async function printStatus(notesDir) {
-  const { importedCount, notesCount, importedWithErrorsCount, importedWithoutErrorsCount, progress } = await getImportNotesStatus(notesDir)
+  const { importedCount, notesCount, importedWithErrorsCount, importedWithoutErrorsCount, progress } = await getImportedNotesStatus(notesDir)
   console.info(`Imported: ${importedCount}/${notesCount} [${progress}%]`)
   console.info(`Imported with errors: ${importedWithErrorsCount}`)
   console.info(`Imported without errors: ${importedWithoutErrorsCount}`)
+}
+
+async function showErrors() {
+  (await getImportedNotesErrors()).forEach((noteStatus, index) => {
+    console.log(`${index + 1}. "${noteStatus.filePath}":`)
+    console.log(`${noteStatus.error?.message || noteStatus.error}\n`)
+  })
 }
