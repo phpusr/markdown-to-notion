@@ -6,13 +6,18 @@ import { addImportStatus, loadImportStatuses } from './db.js'
 
 const importedNotes = {}
 
-export async function importNotes(notesDir) {
+export async function importNotes(notesDir, onlyWithErrors = false) {
   const importedNoteList = await loadImportStatuses()
   importedNoteList.forEach(noteInfo => importedNotes[noteInfo.filePath] = noteInfo)
   console.info(`\nLoaded already imported ${importedNoteList.length} notes`)
 
   // noinspection JSValidateTypes
-  const { files } = getNotesFiles(notesDir)
+  let files
+  if (onlyWithErrors) {
+    files = importedNoteList.filter(it => it.error).map(it => it.filePath)
+  } else {
+    files = getNotesFiles(notesDir).files
+  }
 
   let fileIndex = 0
   for (const relFilePath of files) {
@@ -111,6 +116,6 @@ export async function getImportedNotesStatus(notesDir) {
   }
 }
 
-export async function getImportedNotesErrors() {
+export async function getImportedWithErrorsNotes() {
   return (await loadImportStatuses()).filter(it => it.error)
 }
