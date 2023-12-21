@@ -49,7 +49,7 @@ export async function importNotes(notesDir, onlyWithErrors = false) {
 }
 
 export async function importNotesWithErrors(notesDir) {
-  const notes = (await loadImportStatuses()).filter(it => it.error)
+  const notes = (await loadImportStatuses()).filter(it => it.error && !it.skip)
   let fileIndex = 0
 
   for (const noteInfo of notes) {
@@ -79,7 +79,7 @@ export async function importNotesWithErrors(notesDir) {
     try {
       noteInfo.data = readFileSync(filePath, 'utf8')
     } catch (e) {
-      console.error('error in file: ', noteInfo.filePath, '\n', e)
+      console.error(`error in file: ${noteInfo.filePath}\n${e}`)
     }
 
     if (!noteInfo.data) {
@@ -93,7 +93,7 @@ export async function importNotesWithErrors(notesDir) {
     } catch (e) {
       noteInfo.imported = false
       noteInfo.error = e.body || e
-      console.error('ERROR')
+      console.error(`ERROR with note id: ${noteInfo.id}`)
     }
     await updateImportStatus(noteInfo)
   }
