@@ -30,9 +30,22 @@ export async function createPage({ title, pageId }) {
   })
 }
 
+export async function archivePage(pageId) {
+  await notion.pages.update({
+    page_id: pageId,
+    archived: true,
+  })
+}
+
 export async function addBlocks({ parentId, blocks }){
   return await notion.blocks.children.append({
     block_id: parentId,
     children: blocks
+  })
+}
+
+export async function deleteBlock(blockId) {
+  return await notion.blocks.delete({
+    block_id: blockId,
   })
 }

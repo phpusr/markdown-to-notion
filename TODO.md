@@ -1,3 +1,3 @@
 # TODO
 
-- Добавить команду повторного импорта заметок с ошибками
+- Use sqlite instead of PostgresQL

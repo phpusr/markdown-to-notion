@@ -1,7 +1,7 @@
-import { lstatSync, readdirSync, readFileSync } from 'node:fs'
+import { lstatSync, readdirSync, readFileSync, existsSync } from 'node:fs'
 import { markdownToBlocks } from '@tryfabric/martian'
-import { addBlocks, createPage } from './notion_api.js'
-import { addImportStatus, loadImportStatuses } from './db.js'
+import { addBlocks, archivePage, createPage } from './notion_api.js'
+import { addImportStatus, loadImportStatuses, updateImportStatus } from './db.js'
 
 
 const importedNotes = {}
@@ -46,6 +46,57 @@ export async function importNotes(notesDir, onlyWithErrors = false) {
   }
 
   console.info('\nDONE.')
+}
+
+export async function importNotesWithErrors(notesDir) {
+  const notes = (await loadImportStatuses()).filter(it => it.error)
+  let fileIndex = 0
+
+  for (const noteInfo of notes) {
+    const progress = Math.round(++fileIndex / notes.length * 100)
+    console.log(`\n[${progress}%][${fileIndex}/${notes.length}] ${noteInfo.filePath}`)
+    console.log('-'.repeat(100) + '\n')
+    const filePath = `${notesDir}/${noteInfo.filePath}`
+
+    noteInfo.imported = true
+    noteInfo.error = null
+
+    if (!existsSync(filePath)) {
+      console.log(`File: "${filePath}" was deleted and will be archive in Notion`)
+      try {
+        await archivePage(noteInfo.noteId)
+      } catch (e) {
+        noteInfo.imported = false
+        noteInfo.error = e.body || e
+        console.error(`ERROR with note id: ${noteInfo.id}`)
+      }
+
+      await updateImportStatus(noteInfo)
+      continue
+    }
+
+    noteInfo.data = ''
+    try {
+      noteInfo.data = readFileSync(filePath, 'utf8')
+    } catch (e) {
+      console.error('error in file: ', noteInfo.filePath, '\n', e)
+    }
+
+    if (!noteInfo.data) {
+      console.log(`File: "${filePath}" is empty`)
+      continue
+    }
+
+    const blocks = markdownToBlocks(noteInfo.data)
+    try {
+      await addBlocks({ parentId: noteInfo.noteId, blocks })
+    } catch (e) {
+      noteInfo.imported = false
+      noteInfo.error = e.body || e
+      console.error('ERROR')
+    }
+    await updateImportStatus(noteInfo)
+  }
 }
 
 async function createParentNotes(relFilePath) {

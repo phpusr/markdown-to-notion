@@ -1,4 +1,4 @@
-import { getImportedWithErrorsNotes, getImportedNotesStatus, importNotes } from './src/notes_importer.js'
+import { getImportedWithErrorsNotes, getImportedNotesStatus, importNotes, importNotesWithErrors } from './src/notes_importer.js'
 import { cleanDb } from './src/db.js'
 
 await main()
@@ -15,7 +15,7 @@ async function main() {
       await importNotes(args[1])
       return
     case '--import-with-errors':
-      await importNotes(args[1], true)
+      await importNotesWithErrors(args[1])
       return
     case '--status':
       await printStatus(args[1])
